@@ -1,90 +1,112 @@
-# Tech Stack Document
+# money-laundry-manager Tech Stack
 
-This document explains the key technologies chosen for the **codeguide-starter** project. It’s written in everyday language so anyone—technical or not—can understand why each tool was picked and how it supports the application.
+This document explains, in simple terms, the technology choices behind the **money-laundry-manager** project. It outlines the tools and services we’ve picked, why we picked them, and how they work together to deliver a secure, reliable, and user-friendly laundry management system.
 
 ## 1. Frontend Technologies
-The frontend is everything the user sees and interacts with. For this project, we’ve used:
 
-- **Next.js (App Router)**
-  - A React framework that makes page routing, server-side rendering, and API routes very simple.
-  - Enhances user experience by pre-rendering pages on the server or at build time, leading to faster initial load.
-- **React 18**
-  - The underlying library for building user interfaces with reusable components.
-  - Provides a smooth, interactive experience thanks to its virtual DOM and modern hooks.
-- **TypeScript**
-  - A superset of JavaScript that adds types (labels for data).
-  - Helps catch errors early during development and makes the code easier to maintain.
-- **CSS (globals.css & theme.css)**
-  - **globals.css** applies base styles (fonts, colors, resets) across the entire app.
-  - **dashboard/theme.css** defines the look and feel specific to the dashboard area.
-  - This separation keeps styles organized and avoids accidental style conflicts.
+Our goal on the frontend is to build a fast, responsive, and consistent user interface that anyone can use on desktop or mobile. Here’s how we do that:
 
-By combining these tools, we have a clear structure (Next.js folders for pages and layouts), safer code (TypeScript), and flexible styling with vanilla CSS.
+- **Next.js (React + TypeScript)**
+  - Why: Next.js makes it easy to build web pages that load quickly (with built-in server rendering and code splitting). React gives us reusable components, and TypeScript helps catch errors early.
+  - Benefit for users: Smooth page transitions, faster loading times, and fewer bugs in the interface.
+
+- **Tailwind CSS**
+  - Why: A utility-first styling framework that lets us write class names for colors, spacing, layouts, and more without leaving our HTML/JSX.
+  - Benefit for users: Consistent look and feel across all pages and components, plus rapid styling updates.
+
+- **shadcn/ui**
+  - Why: A library of pre-built, Tailwind-styled UI components (buttons, forms, tables, modals) that integrate seamlessly with Next.js.
+  - Benefit for users: Polished, professional design out of the box, with consistent spacing, typography, and interactions.
 
 ## 2. Backend Technologies
-The backend handles data, user accounts, and the logic behind the scenes. Our choices here are:
+
+On the server side, we handle data storage, user authentication, and the core business logic for managing orders. Here are the main pieces:
 
 - **Next.js API Routes**
-  - Allows us to write server-side code (`route.ts` files) alongside our frontend in the same project.
-  - Runs on Node.js, so we can handle requests like sign-up, sign-in, and data fetching in one place.
-- **Node.js Runtime**
-  - The JavaScript environment on the server that executes our API routes.
-- **bcrypt** (npm package)
-  - A library for hashing passwords securely before storing them.
-  - Ensures that even if someone got access to our data, raw passwords aren’t visible.
-- **(Optional) NextAuth.js or JWT**
-  - While this starter kit shows a custom authentication flow, it can easily integrate services like NextAuth.js for email-based login or JWT (JSON Web Tokens) for stateless sessions.
+  - Why: Built-in API handlers within the same codebase as the pages. This keeps frontend and backend logic together in one project.
+  - Role: Define endpoints like `/api/auth`, `/api/orders`, and `/api/customers` to process requests from the UI.
 
-These components work together to receive user credentials, verify or store them securely, manage sessions or tokens, and deliver protected data back to the frontend.
+- **Better Auth**
+  - Why: A simple, secure authentication library that plugs into Next.js API Routes.
+  - Role: Handle user sign-up, sign-in, session management, and role checks (e.g., “Pegawai” vs. “Owner”).
+
+- **Drizzle ORM**
+  - Why: A lightweight, type-safe library for working with SQL databases in TypeScript.
+  - Role: Define database schemas and run queries (create orders, update statuses, fetch customer lists) in a safe, structured way.
+
+- **PostgreSQL (via Supabase or local Docker)**
+  - Why: A reliable, scalable relational database for storing users, orders, customers, and employees.
+  - Role: Central data store for all business information (order history, customer profiles, transaction logs).
 
 ## 3. Infrastructure and Deployment
-Infrastructure covers where and how we host the app, as well as how changes get delivered:
 
-- **Git & GitHub**
-  - Version control system (Git) and remote hosting (GitHub) keep track of all code changes and allow team collaboration.
-- **Vercel (or Netlify)**
-  - A popular hosting service optimized for Next.js, with one-click deployments and global content delivery.
-  - Automatically rebuilds and deploys the site whenever code is pushed to the main branch.
-- **GitHub Actions (CI/CD)**
-  - Automates tasks like linting (ESLint), formatting (Prettier), and running any tests you add.
-  - Ensures that only clean, tested code goes live.
+These choices ensure that developers can run the app locally, and that we can deploy it reliably to production:
 
-Together, these tools provide a reliable, scalable setup where every code change is tested and deployed quickly, with minimal manual work.
+- **Docker & docker-compose**
+  - Why: Containerization lets us package the app and database together with all dependencies.
+  - Benefit: Every team member and server runs the same environment—no more “works on my machine” issues.
+
+- **Environment Variables (`.env`)**
+  - Why: Keep sensitive information (database URLs, API keys, secrets) out of the code.
+  - Benefit: Secure configuration and easy swapping between development, staging, and production settings.
+
+- **Git & GitHub (Version Control)**
+  - Why: Track code changes, collaborate via branches and pull requests.
+  - Benefit: Clear history of who changed what, easy rollbacks, and peer reviews.
+
+- **CI/CD Pipeline (e.g., GitHub Actions)**
+  - Why: Automate tests, builds, and deployments whenever code is pushed.
+  - Benefit: Faster, more reliable releases with fewer manual steps.
+
+- **Cloud Hosting (e.g., Vercel, AWS, or any Docker-friendly platform)**
+  - Why: Host the frontend and backend with global performance optimizations.
+  - Benefit: Automatic scaling, global edge networks for low latency, simple environment management.
 
 ## 4. Third-Party Integrations
-While this starter kit is minimal by design, it already includes or can easily add:
 
-- **bcrypt**
-  - For secure password hashing (included as an npm dependency).
-- **NextAuth.js** (optional)
-  - A full-featured authentication library supporting email/password, OAuth, and more.
-- **Sentry or LogRocket** (optional)
-  - For real-time error tracking and performance monitoring in production.
+We rely on a few external services to speed up development and add robust features:
 
-These integrations help extend the app’s capabilities without building every feature from scratch.
+- **Supabase**
+  - What: A hosted PostgreSQL database with built-in APIs and dashboards.
+  - Why: Easy setup for cloud-based storage and admin tools without managing your own database server.
+
+- **Better Auth**
+  - What: Authentication and session management library for Next.js.
+  - Why: Secure login flows, password handling, and token management out of the box.
+
+*(Note: If you add payment processing, email notifications, or analytics later, you would list them here in the same way.)*
 
 ## 5. Security and Performance Considerations
-We’ve baked in several measures to keep users safe and the app running smoothly:
 
-Security:
-- Passwords are never stored in plain text—bcrypt hashes them with a random salt.
-- API routes can implement CSRF protection and input validation to block malicious requests.
-- Session tokens or cookies are marked secure and HttpOnly to prevent theft via JavaScript.
+To protect user data and ensure a smooth experience, we’ve built in several safeguards and optimizations:
 
-Performance:
-- Server-side rendering (SSR) and static site generation (SSG) in Next.js deliver pages faster.
-- Code splitting and lazy-loaded components ensure users only download what they need.
-- Global CSS and theme files are small and cached by the browser for quick repeat visits.
+- **Authentication & Role-Based Access Control (RBAC)**
+  - Users must sign in to access any page.
+  - Pages and API routes check user roles (Pegawai vs. Owner) before allowing data access.
 
-These strategies work together to give users a fast, secure experience every time.
+- **Environment-Based Configurations**
+  - Secrets and keys stay out of the code repository.
+  - Separate settings for development, testing, and production.
+
+- **Type-Driven Development (TypeScript + Drizzle)**
+  - Minimizes runtime errors by catching type mismatches at compile time.
+
+- **Next.js Performance Features**
+  - Server-Side Rendering (SSR) and Static Site Generation (SSG) where appropriate for fastest load times.
+  - Automatic code splitting and image optimization.
+
+- **Database Query Optimization**
+  - Structured queries via Drizzle ORM ensure we only fetch the data we need.
+  - Indexing key columns (e.g., order ID, customer ID) for quick lookups.
 
 ## 6. Conclusion and Overall Tech Stack Summary
-In building **codeguide-starter**, we chose technologies that:
 
-- Align with modern web standards (Next.js, React, TypeScript).
-- Provide a clear, file-based project structure for rapid onboarding.
-- Offer built-in support for server-side rendering, API routes, and static assets.
-- Emphasize security through password hashing, session management, and safe defaults.
-- Enable easy scaling and future enhancements via modular code and optional integrations.
+In building the money-laundry-manager application, we chose a **modern, unified stack** that covers every layer from user interface to data storage:
 
-This stack strikes a balance between simplicity for newcomers and flexibility for experienced teams. It accelerates development of a secure authentication flow and a polished dashboard, while leaving room to plug in databases, test suites, and advanced features as the project grows.
+- **Frontend:** Next.js, React, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend:** Next.js API Routes, Better Auth, Drizzle ORM, PostgreSQL (Supabase)
+- **Infrastructure:** Docker, environment variables, GitHub, CI/CD, cloud hosting
+- **Integrations:** Supabase for hosting, Better Auth for authentication
+- **Security & Performance:** Role checks, secret management, type safety, SSR/SSG, query optimization
+
+These choices work together to give your team a solid, scalable foundation. You get a polished user interface, secure login flows, clear data management, and a straightforward path to deploying and maintaining the system in any environment. Whether you stick with Next.js or adapt the patterns to another framework like Django, these principles will guide you to a reliable, easy-to-maintain laundry management solution.

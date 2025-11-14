@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Laundry - Sistem Manajemen Laundry</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-soap text-blue-600 text-2xl mr-2"></i>
+                    <span class="font-bold text-xl text-gray-800">Money Laundry</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <div class="hero-gradient text-white">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                    Selamat Datang di Money Laundry
+                </h1>
+                <p class="text-xl mb-8 text-blue-100">
+                    Sistem manajemen laundry modern untuk kemudahan bisnis Anda
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Login Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+                <div class="bg-blue-600 text-white p-6">
+                    <i class="fas fa-sign-in-alt text-3xl mb-2"></i>
+                    <h2 class="text-2xl font-bold">Login Staff</h2>
+                    <p class="text-blue-100">Akses sistem untuk pegawai dan owner</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-user-tie text-blue-500 w-6"></i>
+                            <span class="ml-3">Dashboard khusus untuk Owner</span>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-user text-blue-500 w-6"></i>
+                            <span class="ml-3">Dashboard untuk Pegawai</span>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-tachometer-alt text-blue-500 w-6"></i>
+                            <span class="ml-3">Manajemen pesanan dan pelanggan</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'accounts:login' %}" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg text-center block transition-colors">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login ke Sistem
+                    </a>
+                </div>
+            </div>
+
+            <!-- Status Check Card -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform hover:scale-105">
+                <div class="bg-green-600 text-white p-6">
+                    <i class="fas fa-search text-3xl mb-2"></i>
+                    <h2 class="text-2xl font-bold">Cek Status Laundry</h2>
+                    <p class="text-green-100">Pelanggan dapat cek status pesanan</p>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-clipboard-check text-green-500 w-6"></i>
+                            <span class="ml-3">Cek status dengan nomor order</span>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-calendar-alt text-green-500 w-6"></i>
+                            <span class="ml-3">Info estimasi selesai</span>
+                        </div>
+                        <div class="flex items-center text-gray-700">
+                            <i class="fas fa-info-circle text-green-500 w-6"></i>
+                            <span class="ml-3">Informasi batas penyimpanan</span>
+                        </div>
+                    </div>
+                    <a href="#" onclick="alert('Fitur cek status akan segera tersedia')" class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg text-center block transition-colors">
+                        <i class="fas fa-search mr-2"></i>Cek Status Laundry
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="mt-16">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">Fitur Sistem</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="bg-blue-100 rounded-full p-6 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-shopping-cart text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Order Laundry</h3>
+                    <p class="text-gray-600">Input pesanan laundry dengan mudah dan cepat, dukungan layanan express dan regular</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-green-100 rounded-full p-6 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-users text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Data Pelanggan</h3>
+                    <p class="text-gray-600">Kelola data pelanggan, riwayat pesanan, dan informasi kontak</p>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-purple-100 rounded-full p-6 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Laporan</h3>
+                    <p class="text-gray-600">Pantau performa bisnis dengan laporan transaksi dan statistik lengkap</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="flex justify-center items-center mb-4">
+                    <i class="fas fa-soap text-blue-400 text-xl mr-2"></i>
+                    <span class="font-bold text-lg">Money Laundry</span>
+                </div>
+                <p class="text-gray-400 text-sm">
+                    Sistem Manajemen Laundry Modern © 2024
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.transform');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

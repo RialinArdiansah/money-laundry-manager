@@ -1,179 +1,162 @@
 # Backend Structure Document
 
-This document outlines the backend architecture, hosting, and infrastructure for the **codeguide-starter** project. It uses plain language so anyone can understand how the backend is set up and how it supports the application.
-
 ## 1. Backend Architecture
 
-- **Framework and Design Pattern**
-  - We use **Next.js API Routes** to handle all server-side logic. These routes live alongside the frontend code in the same repository, making development and deployment simpler.
-  - The backend follows a **layered pattern**:
-    1. **API Layer**: Receives requests (login, registration, data fetch).  
-    2. **Service Layer**: Contains the core business logic (user validation, password hashing).  
-    3. **Data Access Layer**: Talks to the database via a simple ORM (e.g., Prisma or TypeORM).
+This project uses Next.js both as a frontend and backend framework. The backend logic lives in **Next.js API Routes** alongside the React components, creating a single, unified codebase.
 
-- **Scalability**
-  - Stateless API routes can scale horizontally—new instances can spin up on demand.  
-  - We can add caching or a message queue (e.g., Redis or RabbitMQ) without changing the core code.
+Key design choices:
+- Framework: Next.js (App Router) with TypeScript
+- Authentication: Better Auth handling sign-up, sign-in, session management, and protected routes
+- Data layer: Drizzle ORM for type-safe database queries
+- Containerization: Docker + Docker Compose for development and deployment
 
-- **Maintainability**
-  - Code for each feature is grouped by route (authentication, dashboard).  
-  - A service layer separates complex logic from request handling.
-
-- **Performance**
-  - Lightweight Node.js handlers keep response times low.  
-  - Future use of database connection pooling and Redis for caching repeated queries.
+How it supports project goals:
+- Scalability: Each API route is an independent function, making it easy to add new features or microservices later.
+- Maintainability: Clear folder structure separates pages, API routes, shared logic, and database schemas.
+- Performance: Next.js optimizes server-side code and automatically splits routes into serverless functions.
 
 ## 2. Database Management
 
-- **Database Choice**
-  - We recommend **PostgreSQL** for structured data and reliable transactions.  
-  - In-memory caching can be added later with **Redis** for session tokens or frequently read data.
+The application uses a **PostgreSQL** database, which can run locally in Docker or in the cloud via Supabase.
 
-- **Data Storage and Access**
-  - Use an ORM like **Prisma** or **TypeORM** to map JavaScript/TypeScript objects to database tables.
-  - Connection pooling ensures efficient use of database connections under load.
-  - Migrations track schema changes over time, keeping development, staging, and production in sync.
+Technologies:
+- SQL database: PostgreSQL
+- ORM: Drizzle ORM (type-safe queries in TypeScript)
+- Connection management: Environment variables (`DATABASE_URL`) loaded via a `.env` file
+- Containerization: `postgres` service defined in `docker-compose.yaml` for easy local setup
 
-- **Data Practices**
-  - Passwords are never stored in plain text—they are salted and hashed with **bcrypt** before saving.
-  - All outgoing data is typed and validated to prevent malformed records.
+Data management practices:
+- Database migrations and schema definitions live alongside code, ensuring migrations stay in sync.
+- Connection strings and secrets never live in code; they are provided at runtime through environment variables.
+- Drizzle ORM prevents SQL injection by using parameterized queries.
 
 ## 3. Database Schema
 
-### Human-Readable Format
+This project uses a relational (SQL) schema. The main entities and their relationships are:
 
-- **Users**
-  - **id**: Unique identifier  
-  - **email**: User’s email address (unique)  
-  - **password_hash**: Securely hashed password  
-  - **created_at**: Account creation timestamp
+- **Users**: All system users (employees and owners). Fields include email, name, password hash, and role.
+- **Customers**: Laundry customers. Basic contact information and timestamps.
+- **Orders**: Laundry orders placed by customers, including service type, weight, cost, status, and dates.
 
-- **Sessions**
-  - **id**: Unique session record  
-  - **user_id**: Links to a user  
-  - **token**: Random string for authentication  
-  - **expires_at**: When the token stops working  
-  - **created_at**: When the session was created
+Below is a PostgreSQL schema definition:
 
-- **DashboardItems** *(optional for dynamic data)*
-  - **id**: Unique record  
-  - **title**: Item title  
-  - **content**: Item details  
-  - **created_at**: When the item was added
-
-### SQL Schema (PostgreSQL)
 ```sql
--- Users table
+-- Users table holds both employees and owners
+enable_extension 'pgcrypto';  -- for UUID generation
+
 CREATE TABLE users (
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email          TEXT UNIQUE NOT NULL,
+  name           TEXT NOT NULL,
+  hashed_password TEXT NOT NULL,
+  role           TEXT CHECK (role IN ('Pegawai', 'Owner')) NOT NULL,
+  created_at     TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at     TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Sessions table
-CREATE TABLE sessions (
-  id SERIAL PRIMARY KEY,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  token VARCHAR(255) UNIQUE NOT NULL,
-  expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+-- Customers table
+CREATE TABLE customers (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  address     TEXT,
+  phone_number TEXT,
+  created_at  TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at  TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Dashboard items table
-CREATE TABLE dashboard_items (
-  id SERIAL PRIMARY KEY,
-  title TEXT NOT NULL,
-  content TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+-- Orders table links to customers
+CREATE TABLE orders (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_number         TEXT UNIQUE NOT NULL,
+  customer_id          UUID REFERENCES customers(id) ON DELETE CASCADE,
+  service_type         TEXT NOT NULL,
+  weight               NUMERIC(6,2) NOT NULL,
+  total_cost           NUMERIC(10,2) NOT NULL,
+  date_received        DATE NOT NULL,
+  estimated_completion DATE,
+  status               TEXT CHECK (status IN ('Received', 'In Process', 'Completed', 'Picked Up'))
+    DEFAULT 'Received',
+  created_at           TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at           TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 ```  
 
 ## 4. API Design and Endpoints
 
-- **Approach**: We follow a **RESTful** style, grouping related endpoints under `/api` directories.
+The backend follows a RESTful style using Next.js API Routes. Each file under `app/api` becomes an endpoint.
 
-- **Key Endpoints**
-  - `POST /api/auth/register`  
-    • Accepts `{ email, password }`  
-    • Creates a new user and issues a session token  
-  - `POST /api/auth/login`  
-    • Accepts `{ email, password }`  
-    • Verifies credentials and returns a session token  
-  - `POST /api/auth/logout`  
-    • Invalidates the session token on the server  
-  - `GET /api/dashboard/data`  
-    • Requires a valid session  
-    • Returns user-specific data or dashboard items  
+Primary endpoints:
+- **Authentication** (`app/api/auth/[...all]/route.ts`)
+  - Handles user sign-up, sign-in, and session checks
+- **POST /api/orders**
+  - Create a new laundry order
+- **GET /api/orders**
+  - List all orders (with optional filtering by status or date)
+- **GET /api/orders/[orderId]**
+  - Fetch details for a single order by ID
+- **PUT /api/orders/[orderId]/status**
+  - Update the status of an existing order
+- **GET /api/customers**
+  - List all customers
+- **POST /api/customers**
+  - Add a new customer
+- **GET /api/users**
+  - List all employees and owners (protected, owner-only access)
 
-- **Communication**
-  - Frontend sends JSON requests; backend replies with JSON and appropriate HTTP status codes.  
-  - Protected routes check for a valid session token (in cookies or Authorization header).
+Data flow:
+1. Frontend form submits JSON to an API route.
+2. The route validates input, uses Drizzle ORM to interact with PostgreSQL.
+3. A JSON response with data or error is returned.
 
 ## 5. Hosting Solutions
 
-- **Cloud Provider**:  
-  - **Vercel** (recommended) offers seamless Next.js deployments, auto-scaling, and built-in CDN.  
-  - Alternatively, **Netlify** or any Node.js-capable host will work.
+The backend can run in Docker containers or be deployed to a cloud platform.
 
-- **Benefits**
-  - **Reliability**: Global servers and failover across regions.  
-  - **Scalability**: Auto-scale serverless functions based on traffic.  
-  - **Cost-Effectiveness**: Pay-per-use model means low cost for small projects.
+Current setup:
+- Local development: Docker Compose spins up Next.js app and PostgreSQL in separate containers.
+- Production options:
+  - Vercel: Next.js API Routes deploy as serverless functions, auto-scaling by traffic.
+  - Cloud VM (AWS EC2, DigitalOcean Droplet): Run Docker Compose in a managed VM.
+  - Supabase: Managed PostgreSQL database with automated backups.
+
+Benefits:
+- **Reliability**: Managed services handle failover and backups.
+- **Scalability**: Serverless functions (Vercel) or container orchestration (Kubernetes) can scale with demand.
+- **Cost-effectiveness**: Only pay for resources in use; local Docker for low-cost development.
 
 ## 6. Infrastructure Components
 
-- **Load Balancer**
-  - Provided by the hosting platform—distributes API requests across function instances.
+Key components working together:
+- **Load Balancer / Reverse Proxy**: Nginx or built-in Vercel routing distributes requests across instances.
+- **CDN**: Static assets served via Vercel’s global CDN or Cloudflare for fast front-end load times.
+- **Caching**: In-memory caching at the API layer (Node.js cache) or Redis for frequently accessed data (optional extension).
+- **Container Network**: Docker Compose provides an isolated network for the app and database.
 
-- **CDN (Content Delivery Network)**
-  - Vercel’s global edge network caches static assets (CSS, JS, images) for faster page loads.
-
-- **Caching**
-  - **Redis** (optional) for session storage or caching dashboard queries to reduce database load.
-
-- **Object Storage**
-  - For file uploads or backups, integrate with AWS S3 or similar services.
-
-- **Message Queue**
-  - In future, use **RabbitMQ** or **Kafka** for background tasks (e.g., email notifications).
+These pieces ensure quick responses, balanced load, and smooth user experience.
 
 ## 7. Security Measures
 
+User data and operations are protected through multiple layers:
 - **Authentication & Authorization**
-  - Passwords hashed with **bcrypt** and salted.  
-  - Session tokens stored in secure, HttpOnly cookies or Authorization headers.  
-  - Protected endpoints verify tokens before proceeding.
-
+  - Better Auth library for secure session management
+  - Role-based access control: only users with the "Owner" role can access certain endpoints
 - **Data Encryption**
-  - **HTTPS/TLS** encrypts data in transit.  
-  - Database connections use SSL to encrypt data between the app and the database.
-
+  - TLS/HTTPS for all client-server communications
+  - Passwords stored as hashed values
+  - Environment variables for secrets (never committed to code)
 - **Input Validation**
-  - Every incoming request is validated (e.g., valid email format, password length) to prevent SQL injection or other attacks.
-
-- **Web Security Best Practices**
-  - Enable **CORS** policies to limit allowed origins.  
-  - Use **CSRF tokens** or same-site cookies to prevent cross-site requests.  
-  - Set secure headers with **Helmet** or a similar middleware.
+  - Drizzle ORM ensures parameterized queries to prevent SQL injection
+  - API routes validate request bodies before processing
 
 ## 8. Monitoring and Maintenance
 
-- **Performance Monitoring**
-  - Integrate **Sentry** or **LogRocket** for real-time crash reporting and performance tracing.  
-  - Use Vercel’s built-in analytics to track request latencies and error rates.
-
-- **Logging**
-  - Structured logs (JSON) for all API requests and errors, shipped to a log management service like **Datadog** or **Logflare**.
-
-- **Health Checks**
-  - Define a `/health` endpoint that returns a 200 status if the service is up and the database is reachable.
-
-- **Maintenance Strategies**
-  - Automated migrations run on deploy to keep the database schema up to date.  
-  - Scheduled dependency audits and security scans (e.g., `npm audit`).
-  - Regular backups of the database (daily or weekly depending on usage).
+Tools and practices in place:
+- **Logging**: Console logs in API routes; can integrate with services like Sentry or Logflare
+- **Performance Monitoring**: Vercel Analytics or APM tools (New Relic, Datadog)
+- **Health Checks**: Docker health checks for the PostgreSQL container
+- **Backups & Rollbacks**: Automated backups via Supabase or custom scripts for on-premise databases
+- **CI/CD**: GitHub Actions or other pipelines to run tests, linting, and deploy on merge
 
 ## 9. Conclusion and Overall Backend Summary
 
-The backend for **codeguide-starter** is built on Next.js API Routes and Node.js, paired with PostgreSQL for data and optional Redis for caching. It follows a clear layered architecture that keeps code easy to maintain and extend. With RESTful endpoints for authentication and data, secure practices like password hashing and HTTPS, and hosting on Vercel for scalability and global performance, this setup meets the project’s goals for a fast, secure, and developer-friendly foundation. Future enhancements—such as background job queues, advanced monitoring, or richer data models—can be added without disrupting the core structure.
+This backend is built with modern web development best practices in mind: a unified Next.js codebase, a reliable PostgreSQL database managed by Drizzle ORM, and secure authentication through Better Auth. Containerization with Docker ensures that the development environment mirrors production, reducing surprises on deploy. The RESTful API design, coupled with role-based access controls and clear data schemas, makes the system easy to extend and maintain. Finally, leveraging cloud hosting and CDNs guarantees performance and scalability as your laundry management application grows.
