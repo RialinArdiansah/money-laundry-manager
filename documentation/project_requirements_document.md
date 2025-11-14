@@ -1,117 +1,142 @@
-# Project Requirements Document: codeguide-starter
-
----
+# Project Requirements Document (PRD)
 
 ## 1. Project Overview
 
-The **codeguide-starter** project is a boilerplate web application that provides a ready-made foundation for any web project requiring secure user authentication and a post-login dashboard. It sets up the common building blocks—sign-up and sign-in pages, API routes to handle registration and login, and a simple dashboard interface driven by static data. By delivering this skeleton, it accelerates development time and ensures best practices are in place from day one.
+**Money Laundry Manager** is a digital laundry management system designed to help laundry shop employees (Pegawai) and owners manage the end-to-end process of receiving, tracking, and delivering laundry orders. It replaces manual spreadsheets and paper slips with a modern web interface where staff can log in, create new orders, update statuses, and view real-time dashboards. Owners get a high-level view of business metrics like transaction volume, pending orders, and customer lists.
 
-This starter kit is being built to solve the friction developers face when setting up repeated common tasks: credential handling, session management, page routing, and theming. Key objectives include: 1) delivering a fully working authentication flow (registration & login), 2) providing a gated dashboard area upon successful login, 3) establishing a clear, maintainable project structure using Next.js and TypeScript, and 4) demonstrating a clean theming approach with global and section-specific CSS. Success is measured by having an end-to-end login journey in under 200 lines of code and zero runtime type errors.
+This application is being built to standardize laundry operations, reduce errors, and improve transparency between employees and management. Key objectives are:
+
+- Secure authentication and role-based access control (Pegawai vs. Owner).
+- Fast, intuitive order intake and status updates.
+- Centralized customer and employee records with CRUD operations.
+- Interactive dashboards that surface the right data to each user role.
+- A maintainable, Docker-ready architecture that can be deployed consistently across environments.
+
+Success will be measured by how quickly a new employee can log in and process a laundry order, how easily an owner can spot bottlenecks, and how stable and responsive the app remains under normal load.
 
 ---
 
 ## 2. In-Scope vs. Out-of-Scope
 
-### In-Scope (Version 1)
-- User registration (sign-up) form with validation
-- User login (sign-in) form with validation
-- Next.js API routes under `/api/auth/route.ts` handling:
-  - Credential validation
-  - Password hashing (e.g., bcrypt)
-  - Session creation or JWT issuance
-- Protected dashboard pages under `/dashboard`:
-  - `layout.tsx` wrapping dashboard content
-  - `page.tsx` rendering static data from `data.json`
-- Global application layout in `/app/layout.tsx`
-- Basic styling via `globals.css` and `dashboard/theme.css`
-- TypeScript strict mode enabled
+### In-Scope (Version 1.0)
+- User authentication (sign-up, sign-in, password reset).
+- Role-based access control (Pegawai vs. Owner).
+- **Order Management**: input new orders, set weight/service type, calculate estimated cost, assign status.
+- **Order Status Tracking**: update statuses (e.g., Received, Washing, Ready for Pickup).
+- **Customer Management**: add/edit/delete customer profiles (name, contact, address).
+- **Employee Management**: view list of staff, assign roles (Pegawai or Owner).
+- **Dashboards**:
+  - Pegawai view: quick links to input orders and update statuses.
+  - Owner view: overview charts, recent transactions, pending orders count.
+- REST API endpoints for all CRUD operations.
+- Docker & Docker Compose setup for app + PostgreSQL.
+- Environment configuration via `.env` files.
 
-### Out-of-Scope (Later Phases)
-- Integration with a real database (PostgreSQL, MongoDB, etc.)
-- Advanced authentication flows (password reset, email verification, MFA)
-- Role-based access control (RBAC)
-- Multi-tenant or white-label theming
-- Unit, integration, or end-to-end testing suites
-- CI/CD pipeline and production deployment scripts
+### Out-of-Scope (Deferred to Later Phases)
+- Mobile application or native iOS/Android support.
+- Payment gateway integration (online checkout).
+- Advanced financial reporting (profit/loss statements).
+- SMS or email notifications to customers.
+- Multi-branch/multi-tenant support.
+- Offline mode or local data sync.
+- AI-driven features (e.g., demand forecasting).
 
 ---
 
 ## 3. User Flow
 
-A new visitor lands on the root URL and sees a welcome page with options to **Sign Up** or **Sign In**. If they choose Sign Up, they fill in their email, password, and hit “Create Account.” The form submits to `/api/auth/route.ts`, which hashes the password, creates a new user session or token, and redirects them to the dashboard. If any input is invalid, an inline error message explains the issue (e.g., “Password too short”).
+A new or returning user lands on the Sign In page and enters their email and password. After successful authentication, the system checks their role. If the user is a **Pegawai**, they are redirected to the **Pegawai Dashboard**, which shows buttons to “Create New Order” and “Update Order Status,” along with a quick table of today’s pending orders. If the user is an **Owner**, they see the **Owner Dashboard** with summary charts: total orders, revenue estimates, and a list of recent transactions.
 
-Once authenticated, the user is taken to the `/dashboard` route. Here they see a sidebar or header defined by `dashboard/layout.tsx`, and the main panel pulls in static data from `data.json`. They can log out (if that control is present), but otherwise their entire session is managed by server-side cookies or tokens. Returning users go directly to Sign In, submit credentials, and upon success they land back on `/dashboard`. Any unauthorized access to `/dashboard` redirects back to Sign In.
+From the Pegawai Dashboard, clicking **Create New Order** opens a form where the employee selects or adds a customer, chooses service type (e.g., wash, dry clean), inputs weight, and submits. The form calls the `POST /api/orders` endpoint, saving the order in the database and returning a confirmation with an order number and estimated completion date. To update status, the employee visits “Update Order Status,” selects an order from a searchable table, chooses the next status, and submits a `PUT /api/orders/{id}/status` request.
+
+Meanwhile, the Owner can click on chart widgets to drill into details (e.g., view all orders by status), or go to dedicated pages (**Data Pelanggan**, **Data Pegawai**, **Daftar Transaksi**) to perform CRUD operations or export data. All pages use a consistent navigation sidebar, a top bar with user info, and data tables with pagination and filters.
 
 ---
 
 ## 4. Core Features
 
-- **Sign-Up Page (`/app/sign-up/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Sign-In Page (`/app/sign-in/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Authentication API (`/app/api/auth/route.ts`)**: Handles both registration and login based on HTTP method, integrates password hashing (bcrypt) and session or JWT logic.
-- **Global Layout (`/app/layout.tsx` + `globals.css`)**: Shared header, footer, and CSS resets across all pages.
-- **Dashboard Layout (`/app/dashboard/layout.tsx` + `dashboard/theme.css`)**: Sidebar or top nav for authenticated flows, section-specific styling.
-- **Dashboard Page (`/app/dashboard/page.tsx`)**: Reads `data.json`, renders it as cards or tables.
-- **Static Data Source (`/app/dashboard/data.json`)**: Example dataset to demo dynamic rendering.
-- **TypeScript Configuration**: `tsconfig.json` with strict mode and path aliases (if any).
+- **Authentication & Authorization**
+  - Secure sign-up, sign-in, password reset.
+  - Role-based route protection.
+- **Order Management**
+  - Create order: customer lookup/creation, service type, weight, cost calc.
+  - Retrieve order details by order number.
+  - Update order status (chain of statuses).
+- **Customer Management**
+  - List, search, add, edit, delete customers.
+- **Employee Management**
+  - List all staff, assign roles, disable accounts.
+- **Dashboards**
+  - Pegawai: pending orders list, quick actions.
+  - Owner: metrics charts (orders per day, revenue), recent transactions.
+- **Data Tables**
+  - Reusable component with pagination, sorting, filtering.
+- **API Endpoints**
+  - CRUD for orders, customers, employees.
+  - Status update endpoint.
+- **Deployment**
+  - Docker/Docker Compose for local and production.
+  - Environment variable support (.env).
 
 ---
 
 ## 5. Tech Stack & Tools
 
-- **Framework**: Next.js (App Router) for file-based routing, SSR/SSG, and API routes.
-- **Language**: TypeScript for type safety.
-- **UI Library**: React 18 for component-based UI.
-- **Styling**: Plain CSS via `globals.css` (global reset) and `theme.css` (sectional styling). Can easily migrate to CSS Modules or Tailwind in the future.
-- **Backend**: Node.js runtime provided by Next.js API routes.
-- **Password Hashing**: bcrypt (npm package).
-- **Session/JWT**: NextAuth.js or custom JWT logic (to be decided in implementation).
-- **IDE & Dev Tools**: VS Code with ESLint, Prettier extensions. Optionally, Cursor.ai for AI-assisted coding.
+- **Backend**:
+  - Python 3.10+ with Django 4.x.
+  - Django REST Framework for API layer.
+  - Django’s built-in auth or django-allauth for user management.
+  - PostgreSQL as the primary database.
+- **Frontend**:
+  - Next.js 13+ (App Router) with React and TypeScript.
+  - Tailwind CSS for utility-first styling.
+  - shadcn/ui component library for pre-built UI elements.
+- **ORM & Database**:
+  - Django ORM (replaces Drizzle ORM example).
+  - Migration management via Django’s migrations.
+- **Authentication**:
+  - Django sessions + JWT (optional) for API protection.
+- **Containerization & Deployment**:
+  - Docker and Docker Compose.
+  - Environment variables managed via `.env`.
+- **Development Tools**:
+  - VS Code with Python, ESLint, Prettier extensions.
+  - Git for version control, GitHub Actions for CI/CD (optional).
 
 ---
 
 ## 6. Non-Functional Requirements
 
-- **Performance**: Initial page load under 200 ms on a standard broadband connection. API responses under 300 ms.
-- **Security**:
-  - HTTPS only in production.
-  - Proper CORS, CSRF protection for API routes.
-  - Secure password storage (bcrypt with salt).
-  - No credentials or secrets checked into version control.
-- **Scalability**: Structure must support adding database integration, caching layers, and advanced auth flows without rewiring core app.
-- **Usability**: Forms should give real-time feedback on invalid input. Layout must be responsive (mobile > 320 px).
-- **Maintainability**: Code must adhere to TypeScript strict mode. Linting & formatting enforced by ESLint/Prettier.
+- **Performance**: API response time under 200 ms under normal load; page load under 1 s on standard broadband.
+- **Security**: All traffic over HTTPS; input validation to prevent injections; password hashing and secure session cookies; role checks on every protected endpoint.
+- **Scalability**: Stateless backend so multiple containers can run behind a load balancer; indexed database tables for query speed.
+- **Usability**: Responsive design for desktop and tablet; clear navigation labels; form validation with inline error messages.
+- **Maintainability**: Modular code organization; documented API schemas; consistent coding standards (Black/isort for Python, Prettier/ESLint for JS).
 
 ---
 
 ## 7. Constraints & Assumptions
 
-- **No Database**: Dashboard uses only `data.json`; real database integration is deferred.
-- **Node Version**: Requires Node.js >= 14.
-- **Next.js Version**: Built on Next.js 13+ App Router.
-- **Authentication**: Assumes availability of bcrypt or NextAuth.js at implementation time.
-- **Hosting**: Targets serverless or Node.js-capable hosting (e.g., Vercel, Netlify).
-- **Browser Support**: Modern evergreen browsers; no IE11 support required.
+- **Constraints**:
+  - Must use PostgreSQL (hosted on Supabase or self-managed).
+  - Docker must be available in all environments.
+  - shadcn/ui requires React 18+ and Tailwind CSS.
+- **Assumptions**:
+  - Employees and owners have modern web browsers (Chrome, Firefox, Edge).
+  - No offline usage required in v1.
+  - Customer data volume is moderate (<10 000 records) initially.
+  - Network latency is low in target deployment region.
 
 ---
 
 ## 8. Known Issues & Potential Pitfalls
 
-- **Static Data Limitation**: `data.json` is only for demo. A real API or database will be needed to avoid stale data.
-  *Mitigation*: Define a clear interface for data fetching so swapping to a live endpoint is trivial.
+- **Concurrency & Race Conditions**: Two employees updating the same order status simultaneously could cause conflicts. Mitigation: database transactions and optimistic locking / version fields.
+- **API Rate Limits**: If hosted on platforms like Supabase Edge Functions, watch the rate tiers. Plan for throttling in DRF settings.
+- **CORS & CSRF**: Ensure proper configuration of CORS headers in Django for the Next.js frontend, and CSRF protections on state-changing routes.
+- **Data Migrations**: Adding new fields (e.g., `estimasi_selesai`) requires careful migration scripts to avoid downtime.
+- **UI Component Versioning**: Upgrading shadcn/ui or Tailwind may introduce breaking changes. Lock versions in `package.json` and test thoroughly.
+- **Deployment Secrets**: Leaking `.env` files can expose database credentials. Store secrets in a secure vault or CI/CD secrets manager.
 
-- **Global CSS Conflicts**: Using global styles can lead to unintended overrides.
-  *Mitigation*: Plan to migrate to CSS Modules or utility-first CSS in Phase 2.
 
-- **API Route Ambiguity**: Single `/api/auth/route.ts` handling both sign-up and sign-in could get complex.
-  *Mitigation*: Clearly branch on HTTP method (`POST /register` vs. `POST /login`) or split into separate files.
-
-- **Lack of Testing**: No test suite means regressions can slip in.
-  *Mitigation*: Build a minimal Jest + React Testing Library setup in an early iteration.
-
-- **Error Handling Gaps**: Client and server must handle edge cases (network failures, malformed input).
-  *Mitigation*: Define a standard error response schema and show user-friendly messages.
-
----
-
-This PRD should serve as the single source of truth for the AI model or any developer generating the next set of technical documents: Tech Stack Doc, Frontend Guidelines, Backend Structure, App Flow, File Structure, and IDE Rules. It contains all functional and non-functional requirements with no ambiguity, enabling seamless downstream development.
+*This PRD is intended as the single source of truth for developing the Money Laundry Manager. It covers the key requirements, scope, user journeys, technical choices, and potential risks to guide all subsequent design and implementation documents.*
